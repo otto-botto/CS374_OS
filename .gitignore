@@ -8,3 +8,6 @@ CMakeFiles/
 cmake_install.cmake
 cmake-build-*/
 build/
+
+# ignore all .idea directories
+*/.idea
