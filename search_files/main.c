@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "collection.h"
 #include "menu.h"
+#include "process_file.h"
 #include "search_menu.h"
 
 int main(int argc, char **argv)
@@ -37,8 +38,12 @@ int main(int argc, char **argv)
                         printf("Now processing the chosen file named %s.\n", largest.name);
                         collection_t *collection = loadCollection(largest.name);
                         set_t *set_years = makeYearsSet(collection);
-
-
+                        int file_processed = processFile(collection, set_years);
+                        if (file_processed == -1) {
+                            printf("Failed to process the file.\n");
+                            perror(largest.name);
+                            return 1;
+                        }
 
                         //printCollection(collection);
                         freeCollection(collection);

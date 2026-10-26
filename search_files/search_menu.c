@@ -64,12 +64,7 @@ int searchChoiceOne(const char *directory, file_t *selectedFile) {
             }
             numFilesProcessed++;
         }
-
-
-
-
     }
-
     // close the directory
     closedir(currDir);
     return numFilesProcessed;

@@ -30,4 +30,5 @@ typedef struct Directory {
 int processFile(collection_t *collection, set_t *yearsSet);
 void createDirectory(directory_t *directory);
 
+
 #endif //SEARCH_FILES_PROCESS_FILE_H
