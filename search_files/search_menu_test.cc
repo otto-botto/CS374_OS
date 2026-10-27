@@ -60,6 +60,7 @@ protected:
         makeFile("movies_small.csv", 10);
         makeFile("movies_medium.csv", 500);
         makeFile("movies_big.csv", 2000);
+        makeFile("awesome_films.csv", 1500);
         makeFile("tricky.txt", 2500);
         makeFile("tricky.csv", 3500);
         makeFile("movies.csv", 3500);
@@ -92,6 +93,16 @@ TEST_F(LargestFileTest, CountsFilesSmallest) {
     EXPECT_STREQ("movies_small.csv", smallest.name);
     EXPECT_EQ(10, smallest.bytes);
     EXPECT_EQ(3, processed_files);
+}
+
+TEST_F(LargestFileTest, ChecksEnteredFile) {
+    file_t entered = {0};
+    char file[]    = "awesome_films.csv";
+    size_t file_len = strlen("awesome_films.csv");
+
+    int processed_files = searchChoiceThree(file, file_len, tmpDir.c_str(), &entered);
+    EXPECT_STREQ(entered.name, file);
+    EXPECT_EQ(0, processed_files);
 }
 
 

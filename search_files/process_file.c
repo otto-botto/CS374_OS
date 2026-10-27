@@ -9,8 +9,7 @@
  * used rand() example in https://en.cppreference.com/c/numeric/random/rand
  */
 void createDirectory(directory_t *directory) {
-    srand(time(NULL));
-    int random_num = rand()/MAX_RANDOM; // divide by max random to ensure number stays within range
+    int random_num = rand() % (MAX_RANDOM + 1); // divide by max random to ensure number stays within range
     //printf("%d\n", random_num);
     char name[DIR_MAX_CHARS];
     sprintf(name,"%s.%s.%d", ONID, SUB, random_num);
@@ -23,7 +22,7 @@ int processFile(collection_t *collection, set_t *yearsSet) {
     directory_t directory = {0};
     createDirectory(&directory);
     if (mkdir(directory.path_name, 0750) == -1) {
-        printf("mkdir error\n");
+        perror(directory.path_name);
         return -1;
     }
     if (chmod(directory.path_name, 0750) == -1) {
@@ -32,15 +31,13 @@ int processFile(collection_t *collection, set_t *yearsSet) {
     }
     printf("Created directory with name %s\n",directory.path_name);
 
-
-
     // loop through set of years, make files in directory
     for (int i  = 0; i < yearsSet->num_years; i++) {
         // make the file
         char year[YEAR_FILE_CHARS]; // 4 digits + 4 for ".csv" + '\0'
         int current_year = yearsSet->years_set[i];
         sprintf(year, "%d", current_year);
-        strcat(year, ".csv");
+        strcat(year, ".txt");
         //printf("%s and len: %lu\n",year, strlen(year));
         char filePath[DIR_MAX_CHARS + YEAR_FILE_CHARS + 1];
         sprintf(filePath, "%s/%s", directory.path_name, year);
@@ -54,6 +51,7 @@ int processFile(collection_t *collection, set_t *yearsSet) {
             return -1;
         }else if (fchmod(file_descriptor, 0640) == -1) {
             perror("chmod file");
+            close(file_descriptor);
             return -1;
         }else {
             movie_t *tmp = collection->head;
@@ -64,6 +62,7 @@ int processFile(collection_t *collection, set_t *yearsSet) {
                     if (bytes_written == -1) {
                         printf("write() failed on \"%s\"\n", tmp->title);
                         perror(tmp->title);
+                        close(file_descriptor);
                         return -1;
                     }
                 }

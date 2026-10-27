@@ -144,6 +144,7 @@ int searchChoiceThree(char *file_name, size_t name_len,const char *directory, fi
             strcpy(selectedFile->name, file_name);
             selectedFile->nameLen = name_len;
             selectedFile->bytes = tmpStat.st_size;
+            closedir(currDir);
             return 0;
         }
     }

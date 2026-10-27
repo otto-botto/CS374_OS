@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     // REPL
     while (1)
     {
+        srand(time(NULL)); // set the random number seed
         int choice = 0;
         printf("1. Select file to process\n2. Exit the program\n\nEnter a choice from 1 or 2: \n");
         // TODO: handle a invalid choice < 1 or > 2
@@ -89,7 +90,7 @@ int main(int argc, char **argv)
                     size_t length = strlen(file_entered);
                     int processed_files = searchChoiceThree(file_entered, length, ".", &entered);
                     if (processed_files == -1) {
-                        printf("You entered an incorrect choice. Try again.\n");
+                        printf("The file %s was not found. Try again.\n", file_entered);
                         continue;
                     }else {
                         printf("Now processing the chosen file named %s.\n", entered.name);
@@ -108,7 +109,6 @@ int main(int argc, char **argv)
                     }
                     break;
                 }
-
 
                 default:
                     break;
