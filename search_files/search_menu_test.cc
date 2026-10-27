@@ -86,6 +86,16 @@ TEST_F(LargestFileTest, CountsFilesInDirectory) {
     EXPECT_EQ(3, processed_files);
 }
 
+TEST_F(LargestFileTest, CountsFilesSmallest) {
+    file_t smallest = {0};
+    int processed_files = searchChoiceTwo(tmpDir.c_str(), &smallest);
+    EXPECT_STREQ("movies_small.csv", smallest.name);
+    EXPECT_EQ(10, smallest.bytes);
+    EXPECT_EQ(3, processed_files);
+}
+
+
+
 
 
 

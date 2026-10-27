@@ -22,12 +22,17 @@ int processFile(collection_t *collection, set_t *yearsSet) {
     // create a directory
     directory_t directory = {0};
     createDirectory(&directory);
-    int success_dir = mkdir(directory.path_name, 0750);
-    printf("%s\n",directory.path_name);
-    if (success_dir == -1) {
+    if (mkdir(directory.path_name, 0750) == -1) {
         printf("mkdir error\n");
         return -1;
     }
+    if (chmod(directory.path_name, 0750) == -1) {
+        perror("chmod");
+        return -1;
+    }
+    printf("Created directory with name %s\n",directory.path_name);
+
+
 
     // loop through set of years, make files in directory
     for (int i  = 0; i < yearsSet->num_years; i++) {
@@ -46,6 +51,9 @@ int processFile(collection_t *collection, set_t *yearsSet) {
         if (file_descriptor == -1) {
             printf("open() failed on \"%s\"\n", filePath);
             perror(filePath);
+            return -1;
+        }else if (fchmod(file_descriptor, 0640) == -1) {
+            perror("chmod file");
             return -1;
         }else {
             movie_t *tmp = collection->head;

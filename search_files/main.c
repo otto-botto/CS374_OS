@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     {
         int choice = 0;
         printf("1. Select file to process\n2. Exit the program\n\nEnter a choice from 1 or 2: \n");
-        // TODO: catch a choice outside of 1 or 2
+        // TODO: handle a invalid choice < 1 or > 2
         scanf("%d",&choice);
         if (choice == 1) {
             int sub_choice = 0;
@@ -28,7 +28,8 @@ int main(int argc, char **argv)
             printf("Enter a choice from 1 to 3: \n");
             scanf("%d", &sub_choice);
             switch(sub_choice) {
-                case 1: {
+                case 1:
+                {
                     file_t largest = {0};
                     int processed_files = searchChoiceOne(".", &largest);
                     if (processed_files == 0) {
@@ -42,21 +43,73 @@ int main(int argc, char **argv)
                         if (file_processed == -1) {
                             printf("Failed to process the file.\n");
                             perror(largest.name);
+                            freeYearsSet(set_years);
+                            freeCollection(collection);
                             return 1;
                         }
 
                         //printCollection(collection);
+                        freeYearsSet(set_years);
                         freeCollection(collection);
 
                     }
                     break;
                 }
                 case 2:
-                    printf("Selected smallest.");
+                {
+                    file_t smallest = {0};
+                    int processed_files = searchChoiceTwo(".", &smallest);
+                    if (processed_files == 0) {
+                        printf("There are no movies_*.csv files in this directory.\n");
+                        continue;
+                    } else {
+                        printf("Now processing the chosen file named %s.\n", smallest.name);
+                        collection_t *collection = loadCollection(smallest.name);
+                        set_t *set_years = makeYearsSet(collection);
+                        int file_processed = processFile(collection, set_years);
+                        if (file_processed == -1) {
+                            printf("Failed to process the file.\n");
+                            perror(smallest.name);
+                            freeYearsSet(set_years);
+                            freeCollection(collection);
+                            return 1;
+                        }
+                        freeYearsSet(set_years);
+                        freeCollection(collection);
+                    }
                     break;
-                case 3:
-                    printf("Selected to pick a file.");
+                }
+
+
+                case 3: {
+                    printf("Enter the complete file name: \n");
+                    file_t entered = {0};
+                    char file_entered[MAX_FILE_LEN + 1];
+                    scanf("%s", file_entered);
+                    size_t length = strlen(file_entered);
+                    int processed_files = searchChoiceThree(file_entered, length, ".", &entered);
+                    if (processed_files == -1) {
+                        printf("You entered an incorrect choice. Try again.\n");
+                        continue;
+                    }else {
+                        printf("Now processing the chosen file named %s.\n", entered.name);
+                        collection_t *collection = loadCollection(entered.name);
+                        set_t *set_years = makeYearsSet(collection);
+                        int file_processed = processFile(collection, set_years);
+                        if (file_processed == -1) {
+                            printf("Failed to process the file.\n");
+                            perror(entered.name);
+                            freeYearsSet(set_years);
+                            freeCollection(collection);
+                            return 1;
+                        }
+                        freeYearsSet(set_years);
+                        freeCollection(collection);
+                    }
                     break;
+                }
+
+
                 default:
                     break;
 

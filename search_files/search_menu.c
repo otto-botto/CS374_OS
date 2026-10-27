@@ -69,3 +69,86 @@ int searchChoiceOne(const char *directory, file_t *selectedFile) {
     closedir(currDir);
     return numFilesProcessed;
 }
+
+int searchChoiceTwo(const char *directory, file_t *selectedFile)
+{
+    DIR *currDir = opendir(directory);
+    if (currDir == NULL)
+    {
+        perror(directory);
+        return -1;
+    }
+    struct dirent *entry;
+    struct stat tmpStat;
+    int numFilesProcessed = 0;
+
+    while ((entry = readdir(currDir)) != NULL)
+    {
+
+        // if could not read, doesn't meet criteria, or not regular --> continue
+        if (stat(entry->d_name, &tmpStat) != 0)
+        {
+            continue;
+        }
+        else if (meetsCriteria(entry->d_name, strlen(entry->d_name)) != 0)
+        {
+            continue;
+        }
+        else if (!S_ISREG(tmpStat.st_mode))
+        {
+            continue;
+        }
+        else
+        {
+            if (numFilesProcessed == 0) {
+                strcpy(selectedFile->name, entry->d_name);
+                selectedFile->nameLen = strlen(entry->d_name);
+                selectedFile->bytes = tmpStat.st_size;
+            }else {
+                if (tmpStat.st_size < selectedFile->bytes) {
+                    strcpy(selectedFile->name, entry->d_name);
+                    selectedFile->nameLen = strlen(entry->d_name);
+                    selectedFile->bytes = tmpStat.st_size;
+                }
+            }
+            numFilesProcessed++;
+        }
+    }
+
+    closedir(currDir);
+    return numFilesProcessed;
+}
+
+int searchChoiceThree(char *file_name, size_t name_len,const char *directory, file_t *selectedFile) {
+    DIR *currDir = opendir(directory);
+    if (currDir == NULL) {
+        perror(directory);
+        return -1;
+    }
+
+    struct dirent *entry;
+    struct stat tmpStat;
+
+    while ((entry = readdir(currDir)) != NULL) {
+        if (stat(entry->d_name, &tmpStat) != 0) {
+            continue; // could not read stats
+        }
+        else if (!S_ISREG(tmpStat.st_mode)) {
+            continue; // not a regular file
+        }
+        else if (strcmp(file_name, entry->d_name) != 0) {
+            continue; // not the entered file
+        }
+        else {
+            // set up the selected file
+            strcpy(selectedFile->name, file_name);
+            selectedFile->nameLen = name_len;
+            selectedFile->bytes = tmpStat.st_size;
+            return 0;
+        }
+    }
+
+
+    closedir(currDir);
+    return -1; // did not find the file
+}

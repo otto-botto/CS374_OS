@@ -21,5 +21,7 @@ typedef struct File {
 
 int meetsCriteria(char *fileName, size_t length);
 int searchChoiceOne(const char *directory, file_t *selectedFile);
+int searchChoiceTwo(const char *directory, file_t *selectedFile);
+int searchChoiceThree(char *file_name, size_t name_len,const char *directory, file_t *selectedFile);
 
 #endif //SEARCH_FILES_SEARCH_MENU_H
