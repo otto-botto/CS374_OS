@@ -11,3 +11,6 @@ build/
 
 # ignore all .idea directories
 */.idea
+
+# ignore dushanol directories
+dushanol*
