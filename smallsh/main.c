@@ -3,13 +3,13 @@
 #include "interpreter.h"
 
 int main(void) {
-    while (1) {
-        command_line_t *command = parse_input();
-        printf("Command: %s and argc: %d\n", command->argv[0], command->argc);
-        char *com = command->argv[0];
-        switch () {
+    state_t state;
+    init_state(&state);
 
-        }
+    while (state.keep_running) {
+        command_line_t *command = parse_input();
+        run_command(&state, command);
     }
+
     return 0;
 }

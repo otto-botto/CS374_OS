@@ -3,10 +3,6 @@
 //
 #include "parser.h"
 
-int hello(void) {
-    return 3;
-}
-
 command_line_t *parse_line(char *line) {
     command_line_t *curr_command = calloc(1,sizeof(command_line_t));
     // Tokenize the input

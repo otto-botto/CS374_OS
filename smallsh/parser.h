@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "interpreter.h"
+
 
 #define INPUT_LENGTH 2048
 #define MAX_ARGS 512
@@ -22,7 +22,6 @@ typedef struct CommandLine{
     bool is_bg;
 }command_line_t;
 
-int hello(void);
 command_line_t *parse_input(void);
 command_line_t *parse_line(char *line);
 void free_command_line(command_line_t *command);

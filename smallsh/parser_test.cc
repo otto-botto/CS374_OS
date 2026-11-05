@@ -5,11 +5,6 @@ extern "C"{
     #include "parser.h"
 }
 
-TEST(Hello, HelloTest) {
-    int result = hello();
-    EXPECT_EQ(3, result);
-}
-
 class ParserTest : public ::testing::Test {
 protected:
     char buf[INPUT_LENGTH];

@@ -10,14 +10,34 @@
  */
 
 #include <string.h>
+#include <unistd.h> // for execv
+#include <sys/types.h>
+#include <stdio.h> // for perror
+#include <stdlib.h> // for exit and getenv() to get home dir
+#include <stdbool.h>
+#include "parser.h"
+
+#define MAX_BG_PIDS 100
+
+typedef struct State {
+    int last_fg_status;
+    pid_t bg_pids[MAX_BG_PIDS];
+    int bg_pids_count;
+    bool keep_running;
+}state_t;
 
 typedef enum {
-    EXIT_BI,
-    CD_BI,
-    STATUS_BI,
+    EXIT_BI = 1,
+    CD_BI = 2,
+    STATUS_BI = 3,
+    EMPTY = 4,
+    UNKNOWN = 5,
+    EXTERNAL = 6,
 }command_t;
 
-int hello(void);
-int command_lookup(char *command);
-void run_command(command_t command);
+void init_state(state_t *state);
+command_t command_lookup(char *command);
+void run_command(state_t *state, command_line_t *command);
+void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *command);
+void run_other_comm(command_line_t *command);
 #endif //SMALLSH_INTERPRETER_H
