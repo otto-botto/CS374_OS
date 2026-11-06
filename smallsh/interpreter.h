@@ -27,12 +27,11 @@ typedef struct State {
 }state_t;
 
 typedef enum {
-    EXIT_BI = 1,
-    CD_BI = 2,
-    STATUS_BI = 3,
-    EMPTY = 4,
-    UNKNOWN = 5,
-    EXTERNAL = 6,
+    EMPTY,
+    EXIT_BI,
+    CD_BI,
+    STATUS_BI,
+    EXTERNAL,
 }command_t;
 
 void init_state(state_t *state);

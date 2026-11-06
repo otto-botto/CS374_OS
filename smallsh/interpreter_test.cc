@@ -39,7 +39,6 @@ TEST_F(InterpreterTest, UnknownCommand) {
     EXPECT_FALSE(cmd->is_bg);
 
     int comm_lookup = command_lookup(cmd->argv[0]);
-    EXPECT_EQ(comm_lookup, UNKNOWN);
 }
 
 TEST(InitState, InitStateTest) {
@@ -55,21 +54,29 @@ TEST(CommLookUp, CommLookUpTest) {
     char comm_exit[]    = "exit";
     char comm_cd[]    = "cd";
     char comm_status[]    = "status";
-    char comm_unknown[]    = "lls";
+    char comm_comment[]    = "#comment";
+    char comm_comment_space[] = "#";
+    char comm_external[] = "pwd";
 
     int command_exit = command_lookup(comm_exit);
-    EXPECT_EQ(command_exit, 1);
+    EXPECT_EQ(command_exit, EXIT_BI);
 
     int command_cd = command_lookup(comm_cd);
-    EXPECT_EQ(command_cd, 2);
+    EXPECT_EQ(command_cd, CD_BI);
 
     int command_status = command_lookup(comm_status);
-    EXPECT_EQ(command_status, 3);
+    EXPECT_EQ(command_status, STATUS_BI);
 
     int command_empty = command_lookup(nullptr);
-    EXPECT_EQ(command_empty, 4);
+    EXPECT_EQ(command_empty, EMPTY);
 
-    int command_unknown = command_lookup(comm_unknown);
-    EXPECT_EQ(command_unknown, 5);
+    int command_unknown = command_lookup(comm_comment);
+    EXPECT_EQ(command_unknown, EMPTY);
+
+    int command_external = command_lookup(comm_external);
+    EXPECT_EQ(command_external, EXTERNAL);
+
+    int command_comment_space = command_lookup(comm_comment_space);
+    EXPECT_EQ(command_comment_space, EMPTY);
 }
 

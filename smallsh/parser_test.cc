@@ -31,6 +31,25 @@ TEST_F(ParserTest, SimpleCommand) {
     EXPECT_EQ(cmd->argv[2], nullptr);
     EXPECT_FALSE(cmd->is_bg);
 }
+TEST_F(ParserTest, Comment) {
+    parse("#this is a comment\n");                       // fgets keeps the newline
+    EXPECT_EQ(cmd->argc, 4);
+    EXPECT_STREQ(cmd->argv[0], "#this");
+    EXPECT_STREQ(cmd->argv[1], "is");
+    EXPECT_EQ(cmd->input_file, nullptr);
+    EXPECT_EQ(cmd->output_file, nullptr);
+    EXPECT_FALSE(cmd->is_bg);
+}
+
+TEST_F(ParserTest, CommentWithSpace) {
+    parse("# this is a comment with space\n");                       // fgets keeps the newline
+    EXPECT_EQ(cmd->argc, 7);
+    EXPECT_STREQ(cmd->argv[0], "#");
+    EXPECT_STREQ(cmd->argv[1], "this");
+    EXPECT_EQ(cmd->input_file, nullptr);
+    EXPECT_EQ(cmd->output_file, nullptr);
+    EXPECT_FALSE(cmd->is_bg);
+}
 
 TEST_F(ParserTest, CommandWithArgs) {
     parse("ls -l -a /tmp\n");
