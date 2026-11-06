@@ -57,12 +57,58 @@ void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *co
         state->keep_running = false;
     }
     else if (comm_number == STATUS_BI) {
-        printf("%d\n", state->last_fg_status);
+        if (WIFEXITED(state->last_fg_status)) {
+            printf("exit value %d\n", WEXITSTATUS(state->last_fg_status));
+        }else if (WIFSIGNALED(state->last_fg_status)) {
+            printf("terminated by signal %d\n", WIFSIGNALED(state->last_fg_status));
+        }else {
+            printf("exit value %d\n", state->last_fg_status);
+        }
+
     }
     else if (comm_number == EMPTY) {
         ;
     }
 
+}
+
+/* handle non-built in commands */
+void run_other_comm(state_t *state, command_line_t *command) {
+    pid_t spawnpid = -5;
+    int child_status;
+
+    spawnpid = fork();
+    switch (spawnpid) {
+        case -1: {
+            perror("fork()");
+            break;
+        }
+        case 0: {
+            // this is the child
+            // use execvp, p == reading PATH
+            execvp(command->argv[0], command->argv);
+            perror(command->argv[0]);
+            exit(EXIT_FAILURE); // child has to return so parent can be unblocked
+        }
+        default: {
+            // this is the parent
+            // foreground, wait and add status
+            if (command->is_bg == false) {
+                waitpid(spawnpid, &child_status,0);
+                state->last_fg_status = child_status;
+            }else {
+                // background, spawnpid is child's pid, add PID
+                if (state->bg_pids_count < MAX_BG_PIDS) {
+                    state->bg_pids[state->bg_pids_count] = spawnpid;
+                    state->bg_pids_count++;
+                }else {
+                    printf("exceeded 100 PIDs\n");
+                }
+
+            }
+            break;
+        }
+    }
 }
 
 void run_command(state_t *state, command_line_t *command) {
@@ -74,8 +120,9 @@ void run_command(state_t *state, command_line_t *command) {
         case EMPTY:
             run_built_in_comm(state, comm_number, command);
             break;
+
         default:
-            printf("Unknown command.\n");
+            run_other_comm(state, command);
             break;
     }
 
