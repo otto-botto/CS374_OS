@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include "gtest/gtest-spi.h"
+
 extern "C"{
 #include "interpreter.h"
 }
@@ -39,6 +41,20 @@ TEST_F(InterpreterTest, UnknownCommand) {
     EXPECT_FALSE(cmd->is_bg);
 
     int comm_lookup = command_lookup(cmd->argv[0]);
+}
+
+TEST_F(InterpreterTest, RedirectOutput) {
+    parse("ls > junk\n");
+    EXPECT_EQ(cmd->argc, 1); // number of commands
+    EXPECT_STREQ(cmd->argv[0], "ls");
+    EXPECT_EQ(cmd->argv[1], nullptr); // just one command, ls
+    EXPECT_EQ(cmd->input_file, nullptr);
+    EXPECT_STREQ(cmd->output_file, "junk");
+    EXPECT_FALSE(cmd->is_bg);
+
+    int output_file = redirect_output(cmd->output_file);
+    close(output_file);
+    EXPECT_EQ(output_file, 0);
 }
 
 TEST(InitState, InitStateTest) {

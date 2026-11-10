@@ -10,11 +10,13 @@
  */
 
 #include <string.h>
-#include <unistd.h> // for execv
+#include <unistd.h> // for execv, dup2
 #include <sys/types.h>
+#include <sys/stat.h> // for fchmod
 #include <sys/wait.h> // for waitpid
 #include <stdio.h> // for perror
 #include <stdlib.h> // for exit and getenv() to get home dir
+#include <fcntl.h> // for open, write, read files
 #include <stdbool.h>
 #include "parser.h"
 
@@ -36,8 +38,12 @@ typedef enum {
 }command_t;
 
 void init_state(state_t *state);
+void check_bg_pids(state_t *state);
 command_t command_lookup(char *command);
 void run_command(state_t *state, command_line_t *command);
 void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *command);
 void run_other_comm( state_t *state, command_line_t *command);
+int redirect_output(char *file_name);
+int redirect_input(char *file_name);
+
 #endif //SMALLSH_INTERPRETER_H

@@ -40,17 +40,11 @@ void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *co
             if (chdir(path) == -1) {
                 perror("chdir(path)");
             }
-            // TODO: remove print after pwd done
-            char curr_dir[100];
-            printf("%s\n", getcwd(curr_dir, sizeof(curr_dir)));
         }else {
             path = getenv("HOME");
             if (chdir(path) == -1) {
                 perror("chdir(HOME)");
             }
-            // TODO: remove print after pwd done
-            char curr_dir[100];
-            printf("%s\n", getcwd(curr_dir, sizeof(curr_dir)));
         }
     }
     else if (comm_number == EXIT_BI) {
@@ -60,7 +54,7 @@ void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *co
         if (WIFEXITED(state->last_fg_status)) {
             printf("exit value %d\n", WEXITSTATUS(state->last_fg_status));
         }else if (WIFSIGNALED(state->last_fg_status)) {
-            printf("terminated by signal %d\n", WIFSIGNALED(state->last_fg_status));
+            printf("terminated by signal %d\n", WTERMSIG(state->last_fg_status));
         }else {
             printf("exit value %d\n", state->last_fg_status);
         }
@@ -70,6 +64,51 @@ void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *co
         ;
     }
 
+}
+
+/* open a file for writing for redirected output */
+int redirect_output(char *file_name) {
+    if (file_name == NULL) {
+        return -1;
+    }else {
+        int file_descriptor;
+        file_descriptor = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+        if (file_descriptor == -1) {
+            return -1;
+        }
+        if (fchmod(file_descriptor, 0640) == -1) {
+            perror("chmod file");
+            close(file_descriptor);
+            return -1;
+        }
+        if (dup2(file_descriptor, 1) == -1) {
+                close(file_descriptor); // opened and redirect failed, so close the file here
+                return -1;
+        }else {
+                return file_descriptor;
+        }
+
+    }
+}
+
+/* open a file for reading for redirected input */
+int redirect_input(char *file_name) {
+    if (file_name == NULL) {
+        return -1;
+    }else {
+        int file_descriptor;
+        file_descriptor = open(file_name, O_RDONLY);
+        if (file_descriptor == -1) {
+            return -1;
+        }else {
+            // 0 stdin, 1 stdout, 2 stderr
+            if (dup2(file_descriptor, 0) == -1) {
+                return -1;
+            }else {
+                return file_descriptor;
+            }
+        }
+    }
 }
 
 /* handle non-built in commands */
@@ -86,6 +125,26 @@ void run_other_comm(state_t *state, command_line_t *command) {
         case 0: {
             // this is the child
             // use execvp, p == reading PATH
+            if (command->output_file != NULL) {
+                int output = redirect_output(command->output_file);
+                if (output == -1) {
+                    printf("cannot open %s for output\n", command->output_file);
+                    fflush(stdout);
+                    exit(EXIT_FAILURE);
+                }
+                close(output);
+            }
+            if(command->input_file != NULL) {
+                int input = redirect_input(command->input_file);
+                if (input == -1) {
+                    printf("cannot open %s for input\n", command->input_file);
+                    fflush(stdout);
+                    exit(EXIT_FAILURE);
+                }
+                close(input);
+            }
+            // no redirection
+            // if background command, redirect input and output /dev/null
             execvp(command->argv[0], command->argv);
             perror(command->argv[0]);
             exit(EXIT_FAILURE); // child has to return so parent can be unblocked
@@ -101,12 +160,37 @@ void run_other_comm(state_t *state, command_line_t *command) {
                 if (state->bg_pids_count < MAX_BG_PIDS) {
                     state->bg_pids[state->bg_pids_count] = spawnpid;
                     state->bg_pids_count++;
+                    printf("background pid is %d\n", spawnpid);
                 }else {
                     printf("exceeded 100 PIDs\n");
                 }
 
             }
             break;
+        }
+    }
+}
+
+void check_bg_pids(state_t *state) {
+    pid_t curr_pid = -5;
+    int curr_pid_status;
+
+    for (int  i  = 0; i < state->bg_pids_count; i++) {
+        curr_pid = state->bg_pids[i];
+        pid_t result = waitpid(curr_pid, &curr_pid_status, WNOHANG);
+        if (result == curr_pid) { // waitpid returns the pid_t of the child process that has finished and fills in the status
+            if (WIFEXITED(curr_pid_status)) {
+                printf("background pid %d is done: exit value %d\n", curr_pid, WEXITSTATUS(curr_pid_status));
+                fflush(stdout);
+            }else if (WIFSIGNALED(curr_pid_status)) {
+                printf("background pid %d is done: terminated by signal %d\n", curr_pid, WTERMSIG(curr_pid_status));
+                fflush(stdout);
+            }
+            // remove this process, put last one in, reduce count
+            state->bg_pids[i] = state->bg_pids[state->bg_pids_count - 1]; // last entry in this slot
+            state->bg_pids_count--;
+            // now index i holds an unchecked process, decrement i to check this slot again
+            i--;
         }
     }
 }

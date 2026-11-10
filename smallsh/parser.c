@@ -19,7 +19,6 @@ command_line_t *parse_line(char *line) {
             char *given_file = strtok(NULL, " \n");
             if (given_file) {
                 curr_command->output_file = strdup(given_file);
-
             }
 
         } else if(!strcmp(token,"&")){
