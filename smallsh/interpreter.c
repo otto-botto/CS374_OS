@@ -145,16 +145,26 @@ void run_other_comm(state_t *state, command_line_t *command) {
             }
             // no redirection
             // if background command, redirect input and output /dev/null
+            if (command->is_bg == false) { // foreground child, terminate on interrupt
+                struct sigaction SIGINT_action = {0};
+                SIGINT_action.sa_handler = SIG_DFL; // default, which is terminate
+                sigaction(SIGINT, &SIGINT_action, NULL); // a semi-custom handler
+            }
             execvp(command->argv[0], command->argv);
             perror(command->argv[0]);
             exit(EXIT_FAILURE); // child has to return so parent can be unblocked
         }
         default: {
             // this is the parent
-            // foreground, wait and add status
+            // foreground, reap the child with wait and add status
             if (command->is_bg == false) {
                 waitpid(spawnpid, &child_status,0);
                 state->last_fg_status = child_status;
+                if (child_status == 2) {
+                    char message[] = "terminated by signal 2\n";
+                    write(STDOUT_FILENO, message, sizeof(message) -1);
+                }
+
             }else {
                 // background, spawnpid is child's pid, add PID
                 if (state->bg_pids_count < MAX_BG_PIDS) {
@@ -178,7 +188,7 @@ void check_bg_pids(state_t *state) {
     for (int  i  = 0; i < state->bg_pids_count; i++) {
         curr_pid = state->bg_pids[i];
         pid_t result = waitpid(curr_pid, &curr_pid_status, WNOHANG);
-        if (result == curr_pid) { // waitpid returns the pid_t of the child process that has finished and fills in the status
+        if (result == curr_pid) { // waitpid returns the pid_t of the child process if it has finished and fills in the status
             if (WIFEXITED(curr_pid_status)) {
                 printf("background pid %d is done: exit value %d\n", curr_pid, WEXITSTATUS(curr_pid_status));
                 fflush(stdout);
