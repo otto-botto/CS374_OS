@@ -45,5 +45,6 @@ void run_built_in_comm(state_t *state, command_t comm_number, command_line_t *co
 void run_other_comm( state_t *state, command_line_t *command);
 int redirect_output(char *file_name);
 int redirect_input(char *file_name);
+void handle_SIGTSTP(int signo);
 
 #endif //SMALLSH_INTERPRETER_H

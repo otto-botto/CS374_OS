@@ -3,6 +3,8 @@
 //
 #include "interpreter.h"
 
+static volatile sig_atomic_t fg_only_flag = 0;
+
 /* make a state for the shell */
 void init_state(state_t *state) {
     state->last_fg_status = 0;
@@ -111,10 +113,30 @@ int redirect_input(char *file_name) {
     }
 }
 
+
+/* handler function for ctrl-Z */
+void handle_SIGTSTP(int signo) {
+    if (fg_only_flag == 1) {
+        fg_only_flag = 0; // if in foreground mode, flip to & mode
+        char message[] = "Exiting foreground-only mode\n";
+        write(STDOUT_FILENO, message, sizeof(message) - 1);
+    }else {
+        fg_only_flag = 1; // if in & mode, flip to foreground mode
+        char message[] = "Entering foreground-only mode (& is now ignored)\n";
+        write(STDOUT_FILENO, message, sizeof(message) - 1);
+    }
+}
+
 /* handle non-built in commands */
 void run_other_comm(state_t *state, command_line_t *command) {
     pid_t spawnpid = -5;
     int child_status;
+    bool runs_in_bg;
+    if (fg_only_flag == 0 && command->is_bg) {
+        runs_in_bg = true;
+    }else {
+        runs_in_bg = false;
+    }
 
     spawnpid = fork();
     switch (spawnpid) {
@@ -145,11 +167,19 @@ void run_other_comm(state_t *state, command_line_t *command) {
             }
             // no redirection
             // if background command, redirect input and output /dev/null
-            if (command->is_bg == false) { // foreground child, terminate on interrupt
+
+            if (runs_in_bg == 0) {
+                // for SIGINT, restore the default
                 struct sigaction SIGINT_action = {0};
-                SIGINT_action.sa_handler = SIG_DFL; // default, which is terminate
-                sigaction(SIGINT, &SIGINT_action, NULL); // a semi-custom handler
+                SIGINT_action.sa_handler = SIG_DFL; // restore default, which is to terminate
+                sigaction(SIGINT, &SIGINT_action, NULL);
+
             }
+            // for SIGTSTP, ignore no matter runs_in_bg and command->is_bg status
+            struct sigaction SIGTSTP_action = {0};
+            SIGTSTP_action.sa_handler = SIG_IGN; // ignore the signal
+            sigaction(SIGTSTP, &SIGTSTP_action, NULL);
+
             execvp(command->argv[0], command->argv);
             perror(command->argv[0]);
             exit(EXIT_FAILURE); // child has to return so parent can be unblocked
@@ -157,24 +187,23 @@ void run_other_comm(state_t *state, command_line_t *command) {
         default: {
             // this is the parent
             // foreground, reap the child with wait and add status
-            if (command->is_bg == false) {
-                waitpid(spawnpid, &child_status,0);
-                state->last_fg_status = child_status;
-                if (child_status == 2) {
-                    char message[] = "terminated by signal 2\n";
-                    write(STDOUT_FILENO, message, sizeof(message) -1);
-                }
+            // background, add the pid to the array and inc count
 
-            }else {
-                // background, spawnpid is child's pid, add PID
+            if (runs_in_bg == true) {
                 if (state->bg_pids_count < MAX_BG_PIDS) {
                     state->bg_pids[state->bg_pids_count] = spawnpid;
                     state->bg_pids_count++;
                     printf("background pid is %d\n", spawnpid);
                 }else {
-                    printf("exceeded 100 PIDs\n");
+                    perror("exceeded 100 PIDs");
                 }
-
+            }else {
+                waitpid(spawnpid, &child_status, 0);
+                state->last_fg_status = child_status;
+                if (child_status == 2) {
+                    char message[] = "terminated by signal 2\n";
+                    write(STDOUT_FILENO, message, sizeof(message) - 1);
+                }
             }
             break;
         }
