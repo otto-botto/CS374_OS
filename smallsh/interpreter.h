@@ -1,12 +1,9 @@
-//
-// Created by lora on 11/3/26.
-//
 #ifndef SMALLSH_INTERPRETER_H
 #define SMALLSH_INTERPRETER_H
 
 /* I have taken the boot.dev course on memory management which taught me about enums
- * I have also tried to follow the book Crafting Interpreters in the past and am
- * drawing some of the structure of my program from Robert Nystrom's book: https://craftinginterpreters.com/
+ * I have also tried to follow the book Crafting Interpreters, and I am
+ * drawing some of the structure of my program from the book: https://craftinginterpreters.com/
  */
 
 #include <string.h>
@@ -22,6 +19,7 @@
 
 #define MAX_BG_PIDS 100
 
+/* shell state */
 typedef struct State {
     int last_fg_status;
     pid_t bg_pids[MAX_BG_PIDS];
@@ -29,6 +27,7 @@ typedef struct State {
     bool keep_running;
 }state_t;
 
+/* build-in (BI) commands */
 typedef enum {
     EMPTY,
     EXIT_BI,

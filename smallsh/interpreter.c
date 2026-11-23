@@ -1,6 +1,3 @@
-//
-// Created by lora on 11/3/26.
-//
 #include "interpreter.h"
 
 static volatile sig_atomic_t fg_only_flag = 0;
@@ -12,7 +9,7 @@ void init_state(state_t *state) {
     state->keep_running = true;
 }
 
-/* associated command with enum, so can call switch () */
+/* command is an enum, so can call switch() */
 command_t command_lookup(char *command) {
     if (command) {
         if (strcmp(command, "exit") == 0) {
@@ -113,7 +110,6 @@ int redirect_input(char *file_name) {
     }
 }
 
-
 /* handler function for ctrl-Z */
 void handle_SIGTSTP(int signo) {
     if (fg_only_flag == 1) {
@@ -127,7 +123,7 @@ void handle_SIGTSTP(int signo) {
     }
 }
 
-/* handle non-built in commands */
+/* run non-built in commands */
 void run_other_comm(state_t *state, command_line_t *command) {
     pid_t spawnpid = -5;
     int child_status;
@@ -147,6 +143,7 @@ void run_other_comm(state_t *state, command_line_t *command) {
         case 0: {
             // this is the child
             // use execvp, p == reading PATH
+            // first, redirect
             if (command->output_file != NULL) {
                 int output = redirect_output(command->output_file);
                 if (output == -1) {
@@ -167,7 +164,7 @@ void run_other_comm(state_t *state, command_line_t *command) {
             }
             // no redirection
             // if background command, redirect input and output /dev/null
-
+            // second, evaluate the signal
             if (runs_in_bg == 0) {
                 // for SIGINT, restore the default
                 struct sigaction SIGINT_action = {0};
@@ -179,7 +176,7 @@ void run_other_comm(state_t *state, command_line_t *command) {
             struct sigaction SIGTSTP_action = {0};
             SIGTSTP_action.sa_handler = SIG_IGN; // ignore the signal
             sigaction(SIGTSTP, &SIGTSTP_action, NULL);
-
+            // finally, execute
             execvp(command->argv[0], command->argv);
             perror(command->argv[0]);
             exit(EXIT_FAILURE); // child has to return so parent can be unblocked
@@ -210,6 +207,7 @@ void run_other_comm(state_t *state, command_line_t *command) {
     }
 }
 
+/* checks if any of the background processes have finished */
 void check_bg_pids(state_t *state) {
     pid_t curr_pid = -5;
     int curr_pid_status;
@@ -234,6 +232,7 @@ void check_bg_pids(state_t *state) {
     }
 }
 
+/* main run command fn, calls helpers for built-in or external commands */
 void run_command(state_t *state, command_line_t *command) {
     command_t comm_number = command_lookup(command->argv[0]);
     switch (comm_number) {

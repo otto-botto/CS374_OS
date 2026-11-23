@@ -1,7 +1,3 @@
-//
-// Created by lora on 11/2/26.
-//
-
 #ifndef SMALLSH_PARSER_H
 #define SMALLSH_PARSER_H
 

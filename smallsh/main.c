@@ -13,7 +13,7 @@ int main(void) {
     SIGINT_action.sa_handler = SIG_IGN; // set to ignore
     sigaction(SIGINT, &SIGINT_action, NULL);
 
-    // if ctrl-Z comes toggle mode
+    // ctrl-Z == toggle fg/bg mode
     struct sigaction SIGTSTP_action = {0};
     SIGTSTP_action.sa_handler = handle_SIGTSTP;
     SIGTSTP_action.sa_flags = SA_RESTART;
