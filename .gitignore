@@ -10,7 +10,7 @@ cmake-build-*/
 build/
 
 # ignore all .idea directories
-*/.idea
+.idea/
 
 # ignore dushanol directories
 dushanol*
