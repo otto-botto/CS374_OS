@@ -14,3 +14,7 @@ build/
 
 # ignore dushanol directories
 dushanol*
+
+# ignore odt
+*.odt
+*.odt*
